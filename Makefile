@@ -2,6 +2,13 @@ PROJECT_DIR=/Users/joshua/Git/echo_server
 
 default: help
 
+test:
+	gcc ./source/server/main.c -o ./bin/echo_server
+	./bin/echo_server 127.0.0.1 2000
+
+build:
+	gcc ./source/server/main.c -o ./bin/echo_server
+
 help:
 	@echo "Plz check Makefile" 
 

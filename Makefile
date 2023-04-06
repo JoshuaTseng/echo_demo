@@ -11,6 +11,8 @@ test:
 build:
 	gcc ./source/libs/*.c ./source/server/main.c -o ./bin/echo_server
 
+mem_check:
+	valgrind --leak-check=full --show-leak-kinds=all --verbose ./bin/echo_server 127.0.0.1 2000
 
 env_show:
 	@echo PROJECT_DIR=$(PROJECT_DIR)

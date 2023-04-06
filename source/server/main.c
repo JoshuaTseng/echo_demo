@@ -1,9 +1,9 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include "../libs/Utils.h"
 
 /**
  * underlying IPv4 protocol, is 65,507 bytes 
@@ -11,13 +11,12 @@
  * ref : https://en.wikipedia.org/wiki/User_Datagram_Protocol
 */
 #define MESSAGE_BUFFER_SIZE 65507
+#define print_log(format_str, ...) printf("[%s] ", timestamp()), printf((format_str), ##__VA_ARGS__), printf("\n")
 
 // User input
 bool is_requirement_args_exist(int argc, char **argv);
 // Socket manage
 bool is_socket_fd_open_success(int socket_fd);
-// Utils
-int string_to_int(char *str);
 
 int main(int argc, char **argv) {
     int socket_fd;
@@ -28,7 +27,7 @@ int main(int argc, char **argv) {
     char recv_message[MESSAGE_BUFFER_SIZE];
 
     if (!is_requirement_args_exist(argc, argv)) {
-        printf("Please check arguments!\nUsage : %s IP PORT\n", argv[0]);
+        print_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
         return -1;
     }
 
@@ -39,38 +38,38 @@ int main(int argc, char **argv) {
     socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if (!is_socket_fd_open_success(socket_fd)) {
-        printf("Socket open error, please check ethernet, port is available!\n");
+        print_log("Socket open error, please check ethernet, port is available!");
         return -1;
     }
 
     // Load server config
-    printf("Load server config...\n");
+    print_log("Load server config...");
     port_no = string_to_int(argv[2]);
     ip_addr = argv[1];
-    printf("Address %s, port %d\n", ip_addr, port_no);
+    print_log("IP %s, port %d", ip_addr, port_no);
 
     // Bind address and port:
-    printf("Start bind...\n");
+    print_log("Start binding...");
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port_no);
     server_addr.sin_addr.s_addr = inet_addr(ip_addr);
     if(bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
-        printf("Couldn't bind to the address and port\n");
+        print_log("Couldn't bind to the ip and port");
         return -1;
     }
-    printf("Bind socket successful!\n");
+    print_log("Bind socket successful!");
 
     // Wait receive message
-    printf("Start receive message...\n");
+    print_log("Start receive message...");
     int client_addr_length = sizeof(client_addr);
     bool exit = false;
     while (!exit) {
         // if error result is -1, otherwise result is data length
-        printf("Wait receive message...\n");
+        print_log("Wait receive message...");
         int result = recvfrom(socket_fd, recv_message, sizeof(recv_message), 0,
          (struct sockaddr *) &client_addr, &client_addr_length);
-        printf("result message length : %d\n", result);
-        printf("message : %s\n", recv_message);
+        print_log("result message length : %d", result);
+        print_log("message : %s", recv_message);
         
         // Get my ip address and port
         bzero(&client_addr, sizeof(client_addr));
@@ -78,7 +77,7 @@ int main(int argc, char **argv) {
         getsockname(socket_fd, (struct sockaddr *) &client_addr, &len);
         inet_ntop(AF_INET, &client_addr.sin_addr, ip_addr, sizeof(ip_addr));
         port_no = ntohs(client_addr.sin_port);
-        printf("address : %s, port %d\n", ip_addr, port_no);
+        print_log("address : %s, port %d", ip_addr, port_no);
     }
 
 }
@@ -97,8 +96,4 @@ bool is_socket_fd_open_success(int socket_fd) {
     }
 
     return true;
-}
-
-int string_to_int(char *str) {
-    return atoi(str);
 }

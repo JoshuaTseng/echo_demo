@@ -2,15 +2,15 @@ PROJECT_DIR=/Users/joshua/Git/echo_server
 
 default: help
 
+help:
+	@echo "Plz check Makefile" 
+
 test:
-	gcc ./source/server/main.c -o ./bin/echo_server
 	./bin/echo_server 127.0.0.1 2000
 
 build:
-	gcc ./source/server/main.c -o ./bin/echo_server
+	gcc ./source/libs/*.c ./source/server/main.c -o ./bin/echo_server
 
-help:
-	@echo "Plz check Makefile" 
 
 env_show:
 	@echo PROJECT_DIR=$(PROJECT_DIR)

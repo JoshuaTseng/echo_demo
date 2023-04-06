@@ -2,16 +2,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
 #include <arpa/inet.h>
 #include "../libs/Utils.h"
-
-/**
- * underlying IPv4 protocol, is 65,507 bytes 
- * (65,535 bytes − 8-byte UDP header − 20-byte IP header)
- * ref : https://en.wikipedia.org/wiki/User_Datagram_Protocol
-*/
-#define MESSAGE_BUFFER_SIZE 65507
-#define print_log(format_str, ...) printf("[%s] ", timestamp()), printf((format_str), ##__VA_ARGS__), printf("\n")
+#include "../libs/Macro.h"
 
 // User input
 bool is_requirement_args_exist(int argc, char **argv);
@@ -30,6 +24,9 @@ int main(int argc, char **argv) {
         print_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
         return -1;
     }
+
+    // Clean buffers:
+    memset(recv_message, '\0', sizeof(recv_message));
 
     /**
      * Create socket with option :
@@ -60,24 +57,21 @@ int main(int argc, char **argv) {
     print_log("Bind socket successful!");
 
     // Wait receive message
-    print_log("Start receive message...");
-    int client_addr_length = sizeof(client_addr);
+    unsigned int client_addr_length = sizeof(client_addr);
     bool exit = false;
+    int result = 0;
     while (!exit) {
         // if error result is -1, otherwise result is data length
         print_log("Wait receive message...");
-        int result = recvfrom(socket_fd, recv_message, sizeof(recv_message), 0,
-         (struct sockaddr *) &client_addr, &client_addr_length);
-        print_log("result message length : %d", result);
-        print_log("message : %s", recv_message);
-        
-        // Get my ip address and port
-        bzero(&client_addr, sizeof(client_addr));
-        socklen_t len = sizeof(client_addr);
-        getsockname(socket_fd, (struct sockaddr *) &client_addr, &len);
-        inet_ntop(AF_INET, &client_addr.sin_addr, ip_addr, sizeof(ip_addr));
-        port_no = ntohs(client_addr.sin_port);
-        print_log("address : %s, port %d", ip_addr, port_no);
+        result = recvfrom(socket_fd, recv_message, sizeof(recv_message), 0, (struct sockaddr *) &client_addr, &client_addr_length);
+        print_log("Received message form %s : %d\n", inet_ntoa(client_addr.sin_addr), htons(client_addr.sin_port));
+        print_log("Length : %d\nmessage : %s", result, recv_message);
+        // TODO: error handle
+
+        // Echo message
+        result = sendto(socket_fd, recv_message, strlen(recv_message), 0, (struct sockaddr *) &client_addr, client_addr_length);
+        print_log("Echo message success!");
+        // TODO: error handle
     }
 
 }

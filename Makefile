@@ -20,6 +20,9 @@ mem_check:
 env_show:
 	@echo PROJECT_DIR=$(PROJECT_DIR)
 
+env_init:
+	./script/init_env.sh
+
 docker_clean_all_container:
 	docker rm $(docker ps -aq)
 

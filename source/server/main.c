@@ -7,76 +7,47 @@
 #include "../libs/Utils.h"
 #include "../libs/Macro.h"
 
-// User input
-bool is_requirement_args_exist(int argc, char **argv);
-// Socket manage
-bool is_socket_fd_open_success(int socket_fd);
+typedef void (*Handler)(char *);
+typedef void (*Notify)(void);
 
-int main(int argc, char **argv) {
+typedef struct {
     int socket_fd;
-    int port_no;
-    char *ip_addr;
     struct sockaddr_in server_addr;
     struct sockaddr_in client_addr;
-    char recv_message[MESSAGE_BUFFER_SIZE];
+    Handler handler;
+    bool (*checkInputParameters)(int argc, char **argv);
+    bool (*bindWithArgv)(char **argv);
+    void (*receiveMessage)(void);
+} UDPSocketSubject;
+UDPSocketSubject udpSocketSubject;
 
-    if (!is_requirement_args_exist(argc, argv)) {
+bool checkInputParameters(int argc, char **argv);
+bool bindUDPSocketWithArgv(char **argv);
+void receiveMessage(void);
+void echoMessage(char *message);
+
+int main(int argc, char **argv) {
+    print_log("Server start with version : 0.1");
+    udpSocketSubject.checkInputParameters = checkInputParameters;
+    udpSocketSubject.bindWithArgv = bindUDPSocketWithArgv;
+    udpSocketSubject.receiveMessage = receiveMessage;
+    udpSocketSubject.handler = echoMessage;
+
+    if (!udpSocketSubject.checkInputParameters(argc, argv)) {
         print_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
-        return -1;
+        return ERROR_CODE;
     }
 
-    // Clean buffers:
-    memset(recv_message, '\0', sizeof(recv_message));
-
-    /**
-     * Create socket with option :
-     * domain IPv4, type UDP, protocol UDP
-    */
-    socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-    if (!is_socket_fd_open_success(socket_fd)) {
-        print_log("Socket open error, please check ethernet, port is available!");
-        return -1;
+    if (!udpSocketSubject.bindWithArgv(argv)) {
+        return ERROR_CODE;
     }
 
-    // Load server config
-    print_log("Load server config...");
-    port_no = string_to_int(argv[2]);
-    ip_addr = argv[1];
-    print_log("IP %s, port %d", ip_addr, port_no);
+    udpSocketSubject.receiveMessage();
 
-    // Bind address and port:
-    print_log("Start binding...");
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port_no);
-    server_addr.sin_addr.s_addr = inet_addr(ip_addr);
-    if(bind(socket_fd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
-        print_log("Couldn't bind to the ip and port");
-        return -1;
-    }
-    print_log("Bind socket successful!");
-
-    // Wait receive message
-    unsigned int client_addr_length = sizeof(client_addr);
-    bool exit = false;
-    int result = 0;
-    while (!exit) {
-        // if error result is -1, otherwise result is data length
-        print_log("Wait receive message...");
-        result = recvfrom(socket_fd, recv_message, sizeof(recv_message), 0, (struct sockaddr *) &client_addr, &client_addr_length);
-        print_log("Received message form %s : %d\n", inet_ntoa(client_addr.sin_addr), htons(client_addr.sin_port));
-        print_log("Length : %d\nmessage : %s", result, recv_message);
-        // TODO: error handle
-
-        // Echo message
-        result = sendto(socket_fd, recv_message, strlen(recv_message), 0, (struct sockaddr *) &client_addr, client_addr_length);
-        print_log("Echo message success!");
-        // TODO: error handle
-    }
-
+    return 0;
 }
 
-bool is_requirement_args_exist(int argc, char **argv) {
+bool checkInputParameters(int argc, char **argv) {
     if (argc < 3) {
         return false;
     }
@@ -84,10 +55,91 @@ bool is_requirement_args_exist(int argc, char **argv) {
     return true;
 }
 
-bool is_socket_fd_open_success(int socket_fd) {
+bool bindUDPSocketWithArgv(char **argv) {
+    /**
+     * Create socket with option :
+     * domain IPv4, type UDP, protocol UDP
+    */
+    int socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    // open socket file description error
     if (socket_fd < 0) {
         return false;
     }
 
+    // update socket file description, for socket control
+    udpSocketSubject.socket_fd = socket_fd;
+
+    // setup udp socket ip and port
+    int port = string_to_int(argv[2]);
+    char *ip = argv[1];
+    print_log("Binding udp socket with %s:%d", ip, port);
+    udpSocketSubject.server_addr.sin_family = AF_INET;
+    udpSocketSubject.server_addr.sin_port = htons(port);
+    udpSocketSubject.server_addr.sin_addr.s_addr = inet_addr(ip);
+
+    // bind udp socket
+    int bind_result = bind(socket_fd, (struct sockaddr *) &udpSocketSubject.server_addr, sizeof(udpSocketSubject.server_addr));
+
+    // bind udp socket error
+    if( bind_result < 0) {
+        return ERROR_CODE;
+    }
+
+    print_log("Binding udp socket success!");
     return true;
+}
+
+void receiveMessage(void) {
+    unsigned int client_addr_length = sizeof(udpSocketSubject.client_addr);
+    bool exit = false;
+    int result = 0;
+    char message[MESSAGE_BUFFER_SIZE];
+
+    while (!exit) {
+        // clean message buffer
+        memset(message, '\0', sizeof(message));
+
+        // block current thread, wait until any message arrived
+        print_log("Wait message arrive...");
+        result = recvfrom(
+            udpSocketSubject.socket_fd, 
+            message, 
+            sizeof(message), 
+            0, 
+            (struct sockaddr *) &udpSocketSubject.client_addr, 
+            &client_addr_length
+        );
+
+        // receive message error, exit
+        if (result < 0) {
+            print_log("Receive message error, exit");
+            exit = true;
+        }
+
+        print_log("Got message, handling...");
+        udpSocketSubject.handler(message);
+    }
+}
+
+void echoMessage(char *message) {
+    unsigned int client_addr_length = sizeof(udpSocketSubject.client_addr);
+    int result = 0;
+
+    print_log("Sending echo message...");
+    result = sendto(
+        udpSocketSubject.socket_fd, 
+        message, 
+        strlen(message), 
+        0, 
+        (struct sockaddr *) &udpSocketSubject.client_addr, 
+        client_addr_length
+    );
+
+    // receive message error, exit
+    if (result < 0) {
+        print_log("Send message error, ignore it...");
+    }
+
+    print_log("Sent echo message success!");
 }

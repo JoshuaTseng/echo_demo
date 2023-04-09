@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     udpSocketSubject.handler = printMessage;
 
     if (!udpSocketSubject.checkInputParameters(argc, argv)) {
-        print_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
+        print_client_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
         return RESULT_ERROR;
     }
 
@@ -79,7 +79,7 @@ void setupServerAddr(char **argv) {
     int port = string_to_int(argv[2]);
     char *ip = argv[1];
 
-    print_log("Setup server udp socket with %s:%d", ip, port);
+    print_client_log("Setup server udp socket with %s:%d", ip, port);
     udpSocketSubject.server_addr.sin_family = AF_INET;
     udpSocketSubject.server_addr.sin_port = htons(port);
     udpSocketSubject.server_addr.sin_addr.s_addr = inet_addr(ip);
@@ -112,14 +112,14 @@ bool bindClientAddr(void) {
         return false;
     }
 
-    print_log("Binding udp socket success!");
+    print_client_log("Binding udp socket success!");
     return true;
 }
 
 char* keyinMessage(void) {
     char message[MESSAGE_BUFFER_SIZE];
 
-    print_log("Please enter message: ");
+    print_client_log("Please enter message: ");
     return fgets(message, sizeof(message), stdin);
 }
 
@@ -129,7 +129,7 @@ int retryEchoMessage(char *message) {
     int failure_times = 0;
 
     do {
-        print_log("Sending message...");
+        print_client_log("Sending message...");
         sendto(udpSocketSubject.socket_fd, message, strlen(message), 0, (struct sockaddr*)&udpSocketSubject.server_addr, server_addr_length);
 
         // Setup receive timeout million sec
@@ -137,10 +137,10 @@ int retryEchoMessage(char *message) {
         struct timeval time_val;
         time_val.tv_sec = timeout_ms / 1000;
         time_val.tv_usec = timeout_ms % 1000 * 1000; // 1 million = 1 * 1000 usec
-        print_log("Setup receive timeout : %d ms", timeout_ms);
+        print_client_log("Setup receive timeout : %d ms", timeout_ms);
         setsockopt(udpSocketSubject.socket_fd, SOL_SOCKET, SO_RCVTIMEO, &time_val, sizeof(time_val));
 
-        print_log("Wait echo message...");
+        print_client_log("Wait echo message...");
         int result = recvfrom(
             udpSocketSubject.socket_fd, 
             recv_message, 
@@ -155,12 +155,12 @@ int retryEchoMessage(char *message) {
             udpSocketSubject.handler(recv_message);
             break;
         } else if (failure_times == RETRY_MAX_TIMES) {
-            print_log("Retry reach max times %d, stop retry!", failure_times);
+            print_client_log("Retry reach max times %d, stop retry!", failure_times);
             break;
         }
 
         failure_times++;
-        print_log("Timeout! retry times : %d", failure_times);
+        print_client_log("Timeout! retry times : %d", failure_times);
     } while(true);
 
     // Return result by each case
@@ -172,7 +172,7 @@ int retryEchoMessage(char *message) {
 }
 
 void printMessage(char *message) {
-    print_log("Receive message : %s", message);
+    print_client_log("Receive message : %s", message);
 }
 
 int retryTimeout(int base_million_sec, int multiplier, int failure_times, int max_million_sec) {

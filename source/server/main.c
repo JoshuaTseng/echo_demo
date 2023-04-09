@@ -32,11 +32,11 @@ UDPSocketSubject udpSocketSubject = {
 };
 
 int main(int argc, char **argv) {
-    print_log("Server start with version : 0.1");
+    print_server_log("Server start with version : 0.1");
     udpSocketSubject.handler = echoMessage;
 
     if (!udpSocketSubject.checkInputParameters(argc, argv)) {
-        print_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
+        print_server_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
         return RESULT_ERROR;
     }
 
@@ -62,7 +62,7 @@ bool bindUDPSocketWithArgv(char **argv) {
     int port = string_to_int(argv[2]);
     char *ip = argv[1];
 
-    print_log("Binding udp socket with %s:%d", ip, port);
+    print_server_log("Binding udp socket with %s:%d", ip, port);
     udpSocketSubject.server_addr.sin_family = AF_INET;
     udpSocketSubject.server_addr.sin_port = htons(port);
     udpSocketSubject.server_addr.sin_addr.s_addr = inet_addr(ip);
@@ -89,7 +89,7 @@ bool bindUDPSocketWithArgv(char **argv) {
         return false;
     }
 
-    print_log("Binding udp socket success!");
+    print_server_log("Binding udp socket success!");
     return true;
 }
 
@@ -104,7 +104,7 @@ void receiveMessage(void) {
         memset(message, '\0', sizeof(message));
 
         // block current thread, wait until any message arrived
-        print_log("Wait message arrive...");
+        print_server_log("Wait message arrive...");
         result = recvfrom(
             udpSocketSubject.socket_fd, 
             message, 
@@ -116,11 +116,11 @@ void receiveMessage(void) {
 
         // receive message error, exit
         if (result < 0) {
-            print_log("Receive message error, exit");
+            print_server_log("Receive message error, exit");
             exit = true;
         }
 
-        print_log("Got message, handling...");
+        print_server_log("Got message, handling...");
         udpSocketSubject.handler(message);
     }
 }
@@ -129,7 +129,7 @@ void echoMessage(char *message) {
     unsigned int client_addr_length = sizeof(udpSocketSubject.client_addr);
     int result = 0;
 
-    print_log("Sending echo message...");
+    print_server_log("Sending echo message...");
     result = sendto(
         udpSocketSubject.socket_fd, 
         message, 
@@ -141,8 +141,8 @@ void echoMessage(char *message) {
 
     // receive message error, exit
     if (result < 0) {
-        print_log("Send message error, ignore it...");
+        print_server_log("Send message error, ignore it...");
     }
 
-    print_log("Sent echo message success!");
+    print_server_log("Sent echo message success!");
 }

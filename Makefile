@@ -24,7 +24,7 @@ env_init:
 	./script/init_env.sh
 
 docker_clean_all_container:
-	docker rm $(docker ps -aq)
+	docker rm $(shell docker ps -aq)
 
 docker_run_debian_10:
 	docker run -it -v $(PROJECT_DIR):/source --name debian_10 debian:10

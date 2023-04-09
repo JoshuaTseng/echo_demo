@@ -13,8 +13,7 @@ base = 500ms \
 max wait_interval = 8s \
 - Exit program with exit code 0 after the echo message is received
 - Exit program with exit code 1 if reach max-retry
-<br/>
-<br/>
+
 # Getting started
 ## Prerequisites
 - gcc

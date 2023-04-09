@@ -19,27 +19,29 @@ typedef struct {
     bool (*bindWithArgv)(char **argv);
     void (*receiveMessage)(void);
 } UDPSocketSubject;
-UDPSocketSubject udpSocketSubject;
 
 bool checkInputParameters(int argc, char **argv);
 bool bindUDPSocketWithArgv(char **argv);
 void receiveMessage(void);
 void echoMessage(char *message);
 
+UDPSocketSubject udpSocketSubject = {
+    .checkInputParameters = checkInputParameters,
+    .bindWithArgv = bindUDPSocketWithArgv,
+    .receiveMessage = receiveMessage
+};
+
 int main(int argc, char **argv) {
     print_log("Server start with version : 0.1");
-    udpSocketSubject.checkInputParameters = checkInputParameters;
-    udpSocketSubject.bindWithArgv = bindUDPSocketWithArgv;
-    udpSocketSubject.receiveMessage = receiveMessage;
     udpSocketSubject.handler = echoMessage;
 
     if (!udpSocketSubject.checkInputParameters(argc, argv)) {
         print_log("Please check arguments!\nUsage : %s IP PORT", argv[0]);
-        return ERROR_CODE;
+        return RESULT_ERROR;
     }
 
     if (!udpSocketSubject.bindWithArgv(argv)) {
-        return ERROR_CODE;
+        return RESULT_ERROR;
     }
 
     udpSocketSubject.receiveMessage();
@@ -56,6 +58,15 @@ bool checkInputParameters(int argc, char **argv) {
 }
 
 bool bindUDPSocketWithArgv(char **argv) {
+    // setup udp socket ip and port
+    int port = string_to_int(argv[2]);
+    char *ip = argv[1];
+
+    print_log("Binding udp socket with %s:%d", ip, port);
+    udpSocketSubject.server_addr.sin_family = AF_INET;
+    udpSocketSubject.server_addr.sin_port = htons(port);
+    udpSocketSubject.server_addr.sin_addr.s_addr = inet_addr(ip);
+
     /**
      * Create socket with option :
      * domain IPv4, type UDP, protocol UDP
@@ -70,20 +81,12 @@ bool bindUDPSocketWithArgv(char **argv) {
     // update socket file description, for socket control
     udpSocketSubject.socket_fd = socket_fd;
 
-    // setup udp socket ip and port
-    int port = string_to_int(argv[2]);
-    char *ip = argv[1];
-    print_log("Binding udp socket with %s:%d", ip, port);
-    udpSocketSubject.server_addr.sin_family = AF_INET;
-    udpSocketSubject.server_addr.sin_port = htons(port);
-    udpSocketSubject.server_addr.sin_addr.s_addr = inet_addr(ip);
-
     // bind udp socket
     int bind_result = bind(socket_fd, (struct sockaddr *) &udpSocketSubject.server_addr, sizeof(udpSocketSubject.server_addr));
 
     // bind udp socket error
     if( bind_result < 0) {
-        return ERROR_CODE;
+        return false;
     }
 
     print_log("Binding udp socket success!");

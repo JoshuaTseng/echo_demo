@@ -20,8 +20,8 @@ mem_check:
 env_show:
 	@echo PROJECT_DIR=$(PROJECT_DIR)
 
-docker_clean_all_container:
-	docker rm $(shell docker ps -aq)
+docker_clean_debian_10:
+	docker rm -f $(shell docker ps -a -f "name=debian_10" -q)
 
 docker_run_debian_10:
 	docker run -it -v $(PROJECT_DIR):/source --name debian_10 debian:10

@@ -5,8 +5,8 @@ default: help
 help:
 	@echo "Plz check Makefile" 
 
-test:
-	./bin/echo_server 127.0.0.1 2000
+run_server_job:
+	./bin/echo_server 127.0.0.1 8888 &
 
 build_server:
 	gcc ./source/libs/*.c ./source/server/main.c -o ./bin/echo_server

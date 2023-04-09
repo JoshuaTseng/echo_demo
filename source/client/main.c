@@ -39,6 +39,7 @@ UDPSocketSubject udpSocketSubject = {
 };
 
 int main(int argc, char **argv) {
+    print_client_log("Client start with version : 0.1");
     udpSocketSubject.handler = printMessage;
 
     if (!udpSocketSubject.checkInputParameters(argc, argv)) {
@@ -118,6 +119,7 @@ bool bindClientAddr(void) {
 
 char* keyinMessage(void) {
     char message[MESSAGE_BUFFER_SIZE];
+    memset(message, '\0', sizeof(message));
 
     print_client_log("Please enter message: ");
     return fgets(message, sizeof(message), stdin);
@@ -141,6 +143,7 @@ int retryEchoMessage(char *message) {
         setsockopt(udpSocketSubject.socket_fd, SOL_SOCKET, SO_RCVTIMEO, &time_val, sizeof(time_val));
 
         print_client_log("Wait echo message...");
+        memset(recv_message, '\0', sizeof(recv_message));
         int result = recvfrom(
             udpSocketSubject.socket_fd, 
             recv_message, 

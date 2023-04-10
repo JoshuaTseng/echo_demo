@@ -35,6 +35,10 @@ https://user-images.githubusercontent.com/16178192/230790607-ff58fb59-2125-4f58-
         PROJECT_DIR=<set your project path here>
         ...
         ```
+    3. [Option] Install prerequistites if you don't install gcc and make
+        ```
+        ./script/init_env.sh
+        ```
     3. Build server with command
         ```sh
         make build_server

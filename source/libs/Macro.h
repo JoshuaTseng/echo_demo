@@ -6,7 +6,7 @@
  * (65,535 bytes − 8-byte UDP header − 20-byte IP header)
  * ref : https://en.wikipedia.org/wiki/User_Datagram_Protocol
 */
-#define MESSAGE_BUFFER_SIZE 4096
+#define MESSAGE_BUFFER_SIZE 10000
 
 #define RESULT_ERROR -1
 #define RESULT_SUCCESS 0

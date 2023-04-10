@@ -121,7 +121,7 @@ char* keyinMessage(void) {
     char message[MESSAGE_BUFFER_SIZE];
     memset(message, '\0', sizeof(message));
 
-    print_client_log("Please enter message: ");
+    print_client_log("Please enter message(max length %d, exceed will ignore): ", MESSAGE_BUFFER_SIZE);
     return fgets(message, sizeof(message), stdin);
 }
 

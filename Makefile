@@ -1,4 +1,4 @@
-PROJECT_DIR=/Users/joshua/Git/echo_server
+PROJECT_DIR=
 
 default: help
 

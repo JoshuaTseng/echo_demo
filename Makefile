@@ -9,9 +9,11 @@ run_server_job:
 	./bin/echo_server 127.0.0.1 8888 &
 
 build_server:
+	[ -d bin ] || mkdir -p bin
 	gcc ./source/libs/*.c ./source/server/main.c -o ./bin/echo_server
 
 build_client:
+	[ -d bin ] || mkdir -p bin
 	gcc ./source/libs/*.c ./source/client/main.c -o ./bin/echo_client
 
 mem_check:

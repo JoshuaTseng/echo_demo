@@ -69,8 +69,12 @@ https://user-images.githubusercontent.com/16178192/230790607-ff58fb59-2125-4f58-
         ```
         make docker_run_debian_10
         ```
-    6. Now you are in debian 10, please reference \
-    Build & Test > Debian 10 steps !
+    6. In container shell, go to source folder
+        ```
+        cd source
+        ```
+    7. Now you are in debian 10, please reference \
+    Build & Test > Debian 10 step 3 !
 # Usage
 ```
 NAME:

@@ -1,7 +1,7 @@
 # About The Project
-### An echo server program
+### UDP echo server program
 - Can listen to UDP messages on specific IP and port and reply a same message back to the client.
-### A client program
+### UDP client program
 - Can send a UDP message to your server and display the echo message. (message, IP and port are configurable)
 - Support max-retry option. \
 For example, if max-retry = 10, the client will resend message at most 10 times. \
@@ -72,3 +72,24 @@ https://user-images.githubusercontent.com/16178192/230790607-ff58fb59-2125-4f58-
     6. Now you are in debian 10, please reference \
     Build & Test > Debian 10 steps !
 # Usage
+```
+NAME:
+   UDP echo server program
+
+USAGE:
+   echo_server IP PORT
+
+VERSION:
+   0.0.1
+```
+
+```
+NAME:
+   UDP client program
+
+USAGE:
+   echo_client IP PORT
+
+VERSION:
+   0.0.1
+```
